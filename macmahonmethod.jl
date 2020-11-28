@@ -72,8 +72,24 @@ module MacMahonMethod
 
     end
 
+    function prim_v(v::Array{Int64})
+        d = abs(gcd(v))
+        if(d == 1)
+            return v
+        else
+            return Array(broadcast(vi -> floor(Int, vi/d), v)) #is this true?
+        end
+    end
+
+    function prim(V::Matrix{Int64})
+        return Tuple(broadcast(i -> prim_v(V[:, i]), Vector(1:size(V, 2))))
+    end
+
     C = macmahon([-1 2 3; 0 5 6], [1,2])
     println("C: ", C)
     println("Flip res: ", flip(C))
     elimLastCoordinate(C)
+    println("prim_v: ", prim_v([-2, 2, 4]))
+    println("prim: ", prim([-1 2 3; 0 5 6]));
+
 end
