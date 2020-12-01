@@ -43,8 +43,8 @@ module MacMahonMethod
         n = size(V, 1)
         k = size(V, 2)
         q = C.q
-
-        if(q[n] >= 0)
+        res = []
+        if(q[n] < 0)
             II = filter(x -> V[n, x] > 0, Vector(1:k))
             println("Ay: ", II)
             Id = Matrix(1I, size(V, 1), size(V, 2))
@@ -60,6 +60,7 @@ module MacMahonMethod
             II = filter(x -> V[n, x] < 0, Vector(1:k))
             println("Ay: ", II)
             Id = Matrix(1I, size(V, 1), size(V, 2))
+            T = []
             for j in II
                 T = -1*Id*V[n, j]
                 z = zeros(Int64, size(V, 1), size(V, 2))
@@ -68,7 +69,14 @@ module MacMahonMethod
                 T[j, j] = -1
                 println("T: ", T)
             end
+            println("TT: ", T)
+            prim_res = prim(V)
+            println("prim res: ", prim_res)
+            C.V = T + prim_res
+            println("T + prim_res: ", C.V)
         end
+
+        return flip(C)
 
     end
 
