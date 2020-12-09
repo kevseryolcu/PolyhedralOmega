@@ -75,7 +75,7 @@ module MacMahonMethod
             println("prim_res: ", prim_res)
             new_V = T + prim_res
             println("new_V: ", new_V)
-            new_V = [new_V[i, :] for i = 1:n]
+            new_V = new_V[1:end, 1:end .!= k]
             println("new_V: ", new_V)
 
             new_o = o[j] != 0 ? o[:, j] + (0,) + o[j+1, :] : deepcopy(o)
