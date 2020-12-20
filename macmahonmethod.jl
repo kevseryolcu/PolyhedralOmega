@@ -111,10 +111,19 @@ module MacMahonMethod
         return transpose(reduce(hcat, map(i -> prim_v(V[i, :]), Vector(1:size(V, 1)))))
     end
 
+    function eliminateCoordinates(C::SymbolicCone)
+        numrows = size(C.V, 2)
+        println("row count: ", numrows)
+
+        for i in 1:numrows
+        end
+    end
+
     C = macmahon([2 2 6; 0 5 6], [1,2])
     # println("C: ", C)
     # println("Flip res: ", flip(C))
-    println("elim:", elimLastCoordinate(C))
+    eliminateCoordinates(C)
+    # println("elim:", elimLastCoordinate(C))
     # println("prim_v: ", prim_v([-2, 2, 4]))
     println("prim: ", prim([-2 2 4; 0 5 6]));
 
