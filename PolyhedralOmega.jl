@@ -42,20 +42,22 @@ function elimLastCoordinate(C::SymbolicCone)
     o = C.o
     res = []
     II = []
-    # println("V: ", V)
-    # println("q: ", q)
-    # println("k: ", k)
+     println("V: ", V)
+     println("q: ", q)
+     println("k: ", k)
     # println("vector: ", Vector(1:k))
     # println("filter1: ", filter(x -> V[n, x] > 0, Vector(1:k)))
     # println("filter2: ", filter(x -> V[n, x] <= 0, Vector(1:k)))
+    println("qn: ", q[n])
 
     if (q[n] < 0)
         append!(II, filter(x -> V[n, x] > 0, Vector(1:k)))
     else
+        res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:n-1])]
         append!(II, filter(x -> V[n, x] < 0, Vector(1:k)))
     end
     #Cprime if q[n] is zero
-    # println("II: ", II)
+    println("II: ", II)
 
 
     Id = Matrix(1I, size(V, 1), size(V, 2))
@@ -79,18 +81,18 @@ function elimLastCoordinate(C::SymbolicCone)
         # println("q: ", q)
         # println("n: ", n)
         # println("V[:,j]: ", V[:, j])
-        # println("V[n,j]: ", V[n, j])
+        println("V[n,j]: ", V[n, j])
 
         new_q = map(+, q, (-q[n] / (V[n, j])) * V[:, j])
         # println("new_q: ", new_q)
 
         new_cone = SymbolicCone{Int64}(new_V, new_q, new_o)
-        # println("new_cone: ", new_cone)
+        println("new_cone: ", new_cone)
         flip_res = flip(new_cone)
         push!(res, flip_res)
 
     end
-
+    println("res: ", res)
     return res
 end
 
@@ -107,24 +109,36 @@ function prim(V::Matrix{Int64})
     return transpose(reduce(hcat, map(i -> prim_v(V[i, :]), Vector(1:size(V, 1)))))
 end
 
-function eliminateCoordinates(C::SymbolicCone)
-    numrows = size(C.V, 2)
-    println("row count: ", numrows)
+function eliminateCoordinates(C::SymbolicCone, k::Int)
     res = elimLastCoordinate(C)
-    for i = 1:(numrows-1)
-
+    res2 = []
+    for i = 1:(k)
+        for j = 1:length(res)
+            eres = elimLastCoordinate(res[j].S)
+            println("eres: ", eres)
+            push!(res2, eres)
+            println("res2: ", res2)
+        end
+        res = res2
+        res2 = []
     end
+    #println("e res: ", res)
+    return res
 end
 
-C = macmahon([2 2 6; 0 5 6], [1, 2])
+C = macmahon([1 0; -1 0; 0 1; 0 -1], [0; 1; 0; 1])
+
+
 #PrintSymbolicCone(C)
 
 #println("C: ", C)
 # println("Flip res: ", flip(C))
 res = elimLastCoordinate(C)
-PrintCone(res[1])
-eliminateCoordinates(C)
+#println("res: ", res)
+#PrintCone(res[1])
+
+#eliminateCoordinates(C, size(C.V, 2))
 # println("prim_v: ", prim_v([-2, 2, 4]))
-println("prim: ", prim([-2 2 4; 0 5 6]))
+#println("prim: ", prim([-2 2 4; 0 5 6]))
 
 end
