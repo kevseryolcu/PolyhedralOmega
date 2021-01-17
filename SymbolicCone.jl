@@ -1,9 +1,10 @@
-mutable struct SymbolicCone{T<:Number}
-    V::Matrix{T}
-    q::Vector{Float64}
-    o::Vector{Bool}
-    SymbolicCone{T}(V::Matrix{T}, q::Vector{Float64}, o::Vector{Bool}) where {T<:Number} =
-        new(V, q, o)
+mutable struct SymbolicCone
+    V::Array{Int64,2}
+    q::Array{Float64,1}
+    o::Array{Bool,1}
+    sign::Int
+    SymbolicCone(V::Array{Int64,2}, q::Array{Float64,1}, o::Array{Bool,1}, sign::Int=1) =
+        new(V, q, o, sign)
 end
 
 function PrintSymbolicCone(C::SymbolicCone)
@@ -12,4 +13,5 @@ function PrintSymbolicCone(C::SymbolicCone)
     display(C.V)
     println("q: ", C.q)
     println("o: ", C.o)
+    println("sign: ", C.sign)
 end
