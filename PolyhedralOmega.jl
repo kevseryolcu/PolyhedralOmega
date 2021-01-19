@@ -115,21 +115,98 @@ function eliminateCoordinates(C::SymbolicCone, k::Int)
     return res
 end
 
-function enumerateFundamentalParallelePipe
+function enumerateFundamentalParallelePiped(C::SymbolicCone)
+    SMFRes = SmithNormalForm.smith(C.V)
+    S = SmithNormalForm.diagm(SMFRes)
+    Uinv = SMFRes.S
+    Winv = SMFRes.T
+    dimension = size(C.V, 2) # num of rows
+    ambientDimension = size(C.V, 1) # num of cols
+
+    println("S: ", S, "\nUinv: ", Uinv, "\nWinv: ", Winv)
+    println("size 1: ", size(S,1), "\nsize 2: ", size(S,2))
+
+    diagonals = Int64[]
+    for i in 1:dimension
+        if(i <= size(S,1) && i <= size(S,2))
+            println("i: ", i)
+            push!(diagonals, S[i,i])
+        end
+    end
+    println("Diagonals: ", diagonals)
+
+    lastDiagonal = diagonals[end]
+
+    # sprime = [Integer(sk / si) for si in s]
+    primeDiagonals = Int64[]
+    for d in diagonals
+        push!(primeDiagonals, Int64(lastDiagonal/d))
+    end
+    println("Prime diagonals: ", primeDiagonals)
+
+    # qhat = Uinv * q
+    apex = C.q
+    println("q: ", apex, "\nV: ", C.V)
+
+    qhat = Uinv*apex
+    println("qhat: ", qhat)
+
+    # Wprime
+    Wprime = [Winv[j,i]*primeDiagonals[i] for i = 1:dimension, j = 1:dimension] #Winv * primeDiagonals
+    println("wprime: ", Wprime)
+
+    # qtrans
+    qtrans = [sum([-Wprime[j,i] * qhat[i] for i = 1:dimension]) for j = 1:dimension]
+    println("qtrans: ", qtrans)
+
+    #qfrac
+    qfrac = [qtrans[i] - floor.(Int, qtrans[i]) for i = 1:dimension]
+    println("qfrac: ", qfrac)
+
+    #qint
+    qint = [ floor.(Int, qi) for qi in qtrans ]
+    println("qint: ", qint)
+
+    #qsummand
+    qsummand = [Int64(qi) for qi in (lastDiagonal*apex + C.V*qfrac) ]
+    println("qsummand", qsummand)
+
+    #openness
+    openness = [ (qfrac[j] == 0 ? C.o[j] : 0) for j in 1:dimension]
+    println("openness: ", openness)
+
+    #bigP
+    res1 = [[1:1:diagonals[i];] for i= 1:dimension]
+    println("res1: ", res1)
 end
 
-C = macmahon([1 -1], [0])
+function solve(A::Matrix{Int64}, b::Vector{Int64})
+    C = macmahon(A, b)
+    ListOfSymbolicCones = eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2))
+    ListOfFundPP = []
+    for cone in ListOfSymbolicCones
+        push!(ListOfFundPP, enumerateFundamentalParallelePiped(cone))
+    end
+
+    # list of rational_function
+
+end
+
+
+#C = macmahon([1 -1], [0])
 
 
 #PrintSymbolicCone(C)
 
-println("C: ", C)
+#println("C: ", C)
 # println("Flip res: ", flip(C))
 #res = elimLastCoordinate(C)
 #println("res: ", res)
 #PrintCone(res[1])
 
-println("eliminate cordinates result:\n", eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2)))
+# println("eliminate cordinates result:\n", eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2)))
+# println("EFP: ", enumerateFundamentalParallelePiped(C))
+println("solve: ", solve([1 -1], [0]))
 #println("prim_v: ", prim_v([-2, 2, 4]))
 #println("prim: ", prim([-2 2 4; 0 3 6]))
 
