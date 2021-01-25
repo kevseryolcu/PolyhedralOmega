@@ -1,0 +1,4 @@
+name = "PolyhedralOmega"
+uuid = "cb40c8c0-6f69-4117-9a87-8a763eccf627"
+authors = ["Kevser Yolcu <kyolcu@gtu.edu.tr>"]
+version = "0.1.0"
