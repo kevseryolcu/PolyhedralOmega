@@ -104,6 +104,7 @@ end
 
 function eliminateCoordinates(C::SymbolicCone, k::Int)
     res = elimLastCoordinate(C)
+    #println("elc res 1: ", res)
     res2 = []
     #println("K:", k)
     for i = 1:(k-1)#becuse we call eliminate last coordinate before
@@ -116,7 +117,7 @@ function eliminateCoordinates(C::SymbolicCone, k::Int)
         res = res2
         res2 = []
     end
-    #println("e res: ", res)
+    println("e res: ", res)
     return res
 end
 
@@ -248,13 +249,13 @@ function solve(A::Matrix{Int64}, b::Vector{Int64})
 end
 
 
-#C = macmahon([1 -1], [0])
+#C = macmahon([1 -1; -2 1], [0, 0])
 
 
 #PrintSymbolicCone(C)
 
 #println("C: ", C)
-# println("Flip res: ", flip(C))
+#println("Flip res: ", flip(C))
 #res = elimLastCoordinate(C)
 #println("res: ", res)
 #PrintCone(res[1])

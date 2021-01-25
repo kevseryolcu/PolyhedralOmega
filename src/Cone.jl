@@ -1,9 +1,9 @@
 include("SymbolicCone.jl")
 
-mutable struct Cone{T<:Number}
-    S::SymbolicCone{T}
+mutable struct Cone
+    S::SymbolicCone
     sign::Int
-    Cone{T}(S::SymbolicCone{T}, sign::Int) where {T<:Number} =
+    Cone(S::SymbolicCone, sign::Int) =
         new(S, sign)
 end
 
