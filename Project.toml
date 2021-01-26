@@ -1,7 +1,7 @@
 name = "PolyhedralOmega"
 uuid = "cb40c8c0-6f69-4117-9a87-8a763eccf627"
 authors = ["Kevser Yolcu <kyolcu@gtu.edu.tr>"]
-version = "0.1.1"
+version = "0.1.0"
 
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
