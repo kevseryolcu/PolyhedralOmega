@@ -1,7 +1,6 @@
 #using PolyhedralOmega, LinearAlgebra, Test
-using LinearAlgebra, Test
+using LinearAlgebra, Test, PolyhedralOmega
 
-include("../src/PolyhedralOmega.jl")
 include("../src/SymbolicCone.jl")
 
 @testset "macmahon" begin

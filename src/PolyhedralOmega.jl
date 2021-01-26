@@ -306,11 +306,11 @@ end
 # println("eliminate cordinates result:\n", eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2)))
 # println("EFP: ", enumerateFundamentalParallelePiped(C))
 #println("solve: ", solve([1 -1], [0]))
-println("solve: ", solve([1 -1; -2 1], [0, 0]))
-V = [1 1; 0 3]
-q = [0.0, 0.0]
-o = [false, false]
-s = SymbolicCone(V, q, o, 1)
+#println("solve: ", solve([1 -1; -2 1], [0, 0]))
+#V = [1 1; 0 3]
+#q = [0.0, 0.0]
+#o = [false, false]
+#s = SymbolicCone(V, q, o, 1)
 #PrintSymbolicCone(s)
 #res = enumerateFundamentalParallelePiped(s)
 #println("resfpp: ", res)
