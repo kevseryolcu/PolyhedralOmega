@@ -1,5 +1,5 @@
 module PolyhedralOmega
-using LinearAlgebra, IterTools, MultivariatePolynomials, TypedPolynomials
+using LinearAlgebra, IterTools, MultivariatePolynomials, TypedPolynomials, AbstractAlgebra
 #using LazySet
 
 include("SymbolicCone.jl")
@@ -220,69 +220,74 @@ function enumerateFundamentalParallelePiped(C::SymbolicCone)
             append!(outerRes, outer) # outerRes is an integral vector
         end
         #println("outerRes: ", outerRes)
-        push!(L, tuple(collect( ((ai + bi) / lastDiagonal) for (ai,bi) in collect(zip(outerRes, qsummand)) )))
+        #push!(L, tuple(collect( ((ai + bi) / lastDiagonal) for (ai,bi) in collect(zip(outerRes, qsummand)) )))
+        push!(L, collect( Int64((ai + bi) / lastDiagonal) for (ai,bi) in collect(zip(outerRes, qsummand)) ))
     end
-    return L
+    C.fp = L
 end
 
-function ConeToRationalFunction(S::SymbolicCone)
-    numOfVars = size(S.q,1)
-    @polyvar x[1:5] ## gave magic number because of <Unsupported syntax. Expected x[a:b] for literal integers a and b>
-    @polyvar numerator denominator innerpolynomial
-    numerator = 1
-    denominator = 1
-    innerpolynomial = 1
-
-    for i in 1:numOfVars
-        numerator *= x[i]^Int(S.q[i])
-    end
-
-    for i in 1:numOfVars
-        for j in 1:numOfVars
-            innerpolynomial *= x[i]^Int(S.V[i,j])
+function computeRationalFunction(C::SymbolicCone)
+    numOfVars = size(C.q,1)
+    VV = [string("x_",i) for i in 1:numOfVars]
+    S, X = PolynomialRing(QQ, VV, ordering=:deglex)
+    num = 0
+    println("VV: ", VV, "\nQQ: ", QQ, "\nS: ", S, "\nX: ", X, "\n")
+    for p in C.fp
+        tmp = 1
+        for i in 1:length(p)
+            tmp *=X[i]^p[i]
         end
-        #println("innerpolynomial: ", innerpolynomial)
-        denominator *= (1-innerpolynomial)
-        #println("denominator: ", denominator)
-        innerpolynomial = 1
+        num += tmp
     end
+    #println("Numerator:", num)
+    den = 1
+    for j in 1:size(C.V,2)
+        tmp = 1
+        for i in 1:size(C.V,1)
+            tmp *=X[i]^C.V[:,j][i]
+        end
+        den *= 1 - tmp
+    end
+    #println("Denominator:", den)
+    ratfun = num//den
+    #println("ratfun:", ratfun)
 
-    rationalFunction = (S.sign*numerator)/denominator
-
-    #println("rationalFunction: ", rationalFunction)
-    #println("numerator: ", MultivariatePolynomials.numerator(rationalFunction))
-    #println("denominator: ", MultivariatePolynomials.denominator(rationalFunction))
-
-    return rationalFunction
+    C.ratfun = ratfun
 end
 
 function solve(A::Matrix{Int64}, b::Vector{Int64})
     @polyvar RationalFunctions
+    ratfun = 0
     C = macmahon(A, b)
     ListOfSymbolicCones = eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2))
-    ListOfFundPP = []
-    RationalFunctions = 0
-
     for cone in ListOfSymbolicCones
-        #PrintSymbolicCone(cone)
-        append!(ListOfFundPP, enumerateFundamentalParallelePiped(cone))
-        RationalFunctions += ConeToRationalFunction(cone)
-        #print(RationalFunctions)
-        #res = enumerateFundamentalParallelePiped(cone)
-        #println("res: ", res)
+        enumerateFundamentalParallelePiped(cone)
+        computeRationalFunction(cone)
+        ratfun += cone.ratfun
+        PrintSymbolicCone(cone)
     end
-    println("RationalFunctions: ", RationalFunctions)
-    println("\n\n")
 
-    #transformIntegral([1 -1])
-    for f in ListOfFundPP
-        for p in f
-            println("p: ", collect(p))
-            #display(collect(p))
-        end
-    end
-    #println("FPP: ", ListOfFundPP)
-    # list of rational_function
+    #for cone in ListOfSymbolicCones
+    #    enumerateFundamentalParallelePiped(cone)
+    #end
+    #println("FP computed! ")
+    #for cone in ListOfSymbolicCones
+    #    println("FP of cone:", cone.fp)
+    #end
+
+
+    #for cone in ListOfSymbolicCones
+    #    computeRationalFunction(cone)
+    #end
+    #println("RationalFunctions computed! ")
+    #for cone in ListOfSymbolicCones
+    #    println("Ratfun of cone:", cone.ratfun)
+    #end
+    #
+    #for cone in ListOfSymbolicCones
+    #    ratfun+= cone.ratfun
+    #end
+    return ratfun
 
 end
 
