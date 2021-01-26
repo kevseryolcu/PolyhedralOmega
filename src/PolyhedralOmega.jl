@@ -1,6 +1,5 @@
 module PolyhedralOmega
-using LinearAlgebra
-using IterTools
+using LinearAlgebra, IterTools, MultivariatePolynomials, TypedPolynomials
 #using LazySet
 
 include("SymbolicCone.jl")
@@ -117,7 +116,7 @@ function eliminateCoordinates(C::SymbolicCone, k::Int)
         res = res2
         res2 = []
     end
-    println("e res: ", res)
+    #println("e res: ", res)
     return res
 end
 
@@ -226,21 +225,60 @@ function enumerateFundamentalParallelePiped(C::SymbolicCone)
     return L
 end
 
+function ConeToRationalFunction(S::SymbolicCone)
+    numOfVars = size(S.q,1)
+    @polyvar x[1:5] ## gave magic number because of <Unsupported syntax. Expected x[a:b] for literal integers a and b>
+    @polyvar numerator denominator innerpolynomial
+    numerator = 1
+    denominator = 1
+    innerpolynomial = 1
+
+    for i in 1:numOfVars
+        numerator *= x[i]^Int(S.q[i])
+    end
+
+    for i in 1:numOfVars
+        for j in 1:numOfVars
+            innerpolynomial *= x[i]^Int(S.V[i,j])
+        end
+        #println("innerpolynomial: ", innerpolynomial)
+        denominator *= (1-innerpolynomial)
+        #println("denominator: ", denominator)
+        innerpolynomial = 1
+    end
+
+    rationalFunction = (S.sign*numerator)/denominator
+
+    #println("rationalFunction: ", rationalFunction)
+    #println("numerator: ", MultivariatePolynomials.numerator(rationalFunction))
+    #println("denominator: ", MultivariatePolynomials.denominator(rationalFunction))
+
+    return rationalFunction
+end
 
 function solve(A::Matrix{Int64}, b::Vector{Int64})
+    @polyvar RationalFunctions
     C = macmahon(A, b)
     ListOfSymbolicCones = eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2))
     ListOfFundPP = []
+    RationalFunctions = 0
 
     for cone in ListOfSymbolicCones
-        PrintSymbolicCone(cone)
+        #PrintSymbolicCone(cone)
         append!(ListOfFundPP, enumerateFundamentalParallelePiped(cone))
+        RationalFunctions += ConeToRationalFunction(cone)
+        #print(RationalFunctions)
+        #res = enumerateFundamentalParallelePiped(cone)
+        #println("res: ", res)
     end
+    println("RationalFunctions: ", RationalFunctions)
+    println("\n\n")
 
     #transformIntegral([1 -1])
     for f in ListOfFundPP
         for p in f
             println("p: ", collect(p))
+            #display(collect(p))
         end
     end
     #println("FPP: ", ListOfFundPP)
