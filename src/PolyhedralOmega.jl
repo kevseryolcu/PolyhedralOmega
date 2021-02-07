@@ -1,5 +1,5 @@
 module PolyhedralOmega
-using LinearAlgebra, IterTools, MultivariatePolynomials, TypedPolynomials, AbstractAlgebra
+using LinearAlgebra, IterTools, MultivariatePolynomials, TypedPolynomials, AbstractAlgebra, TaylorSeries
 #using LazySet
 
 include("SymbolicCone.jl")
@@ -10,6 +10,7 @@ function macmahon(A::Matrix{Int64}, b::Vector{Int64})
     Id = Matrix(1I, sizeA[2], sizeA[2])
     V = vcat(Id, A)
     q = append!(zeros(Float64, sizeA[2]), -b)
+    #o = zeros(Bool, size(q,1))
     o = zeros(Bool, sizeA[2])
     return SymbolicCone(V, q, o)
 end
@@ -44,35 +45,37 @@ function elimLastCoordinate(C::SymbolicCone)
     II = []
     # println("V: ", V)
     # println("q: ", q)
-    # println("k: ", k)
+     #println("o: ", o)
+     #println("k: ", k)
     # println("vector: ", Vector(1:k))
     # println("filter1: ", filter(x -> V[n, x] > 0, Vector(1:k)))
     # println("filter2: ", filter(x -> V[n, x] <= 0, Vector(1:k)))
-    #println("qn: ", q[n])
-    Iplus = filter(x -> V[n, x] > 0, Vector(1:k))
+    println("qn: ", q[n])
+    Iplus = filter(x -> V[n, x] > 0, Vector(1:k)) #one of them should have zero eq or not?
     Iminus = filter(x -> V[n, x] < 0, Vector(1:k))
     if (q[n] < 0 || (q[n] == 0 && size(Iplus, 1) <= size(Iminus, 1) && size(Iplus, 1) >= 1) )
-        II = Iplus
-    else
-        res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:n-1])]
+        println("Iminus")
         II = Iminus
+        res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:n-1])]
+    else
+        #res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:n-1])]
+        println("Iplus")
+        II = Iplus
     end
     #Cprime if q[n] is zero
+    println("II: ", II)
 
+    sgnq = q[n]
     for j in II
         L = []
         for i in 1:k
             if i == j
-                if q[n] >= 0
-                    push!(L, -1*V[:,j])
-                 else
-                    push!(L, V[:,j])
-                 end
+                push!(L, (sgnq >= 0 ? -1 : 1)*V[:,j])
             else
-                push!(L, (q[n] >= 0 ? 1 : -1)*( (V[n,i] * V[:,j]) + (-V[n,j]*V[:,i]) ))
+                push!(L, (sgnq >= 0 ? 1 : -1)*( (V[n,i] * V[:,j]) + (-V[n,j]*V[:,i]) ))
             end
         end
-
+        println("L: ", L)
         new_o = o[j] != false ? vcat(o[1:j-1], false, o[j+1:end]) : deepcopy(o)
         new_V = prim(hcat(L...))
         new_V = new_V[1:(size(new_V, 1)-1),:]
@@ -81,8 +84,15 @@ function elimLastCoordinate(C::SymbolicCone)
         new_q = new_q[1:n-1]
         new_cone = SymbolicCone(new_V, new_q, new_o)
 
+        print("\nnew cone:")
+        println(new_cone)
+
         flip_res = flip(new_cone)
         push!(res, flip_res)
+
+
+        print("\nflip:")
+        println(flip_res)
     end
     #######
     return res
@@ -128,7 +138,7 @@ function enumerateFundamentalParallelePiped(C::SymbolicCone)
     dimension = size(C.V, 2) # num of rows
     ambientDimension = size(C.V, 1) # num of cols
     #println("C.V: ", C.V)
-    #println("S: ", S, "\nUinv: ", Uinv, "\nWinv: ", Winv)
+    #println("\nUinv: ", Uinv, "\nWinv: ", Winv)
     #println("size 1: ", size(S,1), "\nsize 2: ", size(S,2))
 
     diagonals = Int64[]
@@ -159,6 +169,16 @@ function enumerateFundamentalParallelePiped(C::SymbolicCone)
     # Wprime
     Wprime = [Winv[j,i]*primeDiagonals[i] for i = 1:dimension, j = 1:dimension] #Winv * primeDiagonals
     #println("wprime: ", Wprime)
+
+    tmpWprime = deepcopy(Wprime)
+
+    #println("ftmpwprime: ", tmpWprime)
+    for i in 1:dimension
+        tmpWprime[dimension-i+1,:] = Wprime[i,:]
+    end
+
+    #println("tmpwprime: ", tmpWprime)
+    #Wprime = tmpWprime
 
     # qtrans
     qtrans = [sum([-Wprime[j,i] * qhat[i] for i = 1:dimension]) for j = 1:dimension]
@@ -231,7 +251,7 @@ function computeRationalFunction(C::SymbolicCone)
     VV = [string("x_",i) for i in 1:numOfVars]
     S, X = PolynomialRing(QQ, VV, ordering=:deglex)
     num = 0
-    println("VV: ", VV, "\nQQ: ", QQ, "\nS: ", S, "\nX: ", X, "\n")
+    #println("VV: ", VV, "\nQQ: ", QQ, "\nS: ", S, "\nX: ", X, "\n")
     for p in C.fp
         tmp = 1
         for i in 1:length(p)
@@ -259,61 +279,28 @@ function solve(A::Matrix{Int64}, b::Vector{Int64})
     @polyvar RationalFunctions
     ratfun = 0
     C = macmahon(A, b)
+
+    print("MacMahon cone: ")
+    println(C)
+
     ListOfSymbolicCones = eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2))
+    #println("eliminate coordinates: ", ListOfSymbolicCones)
+    println("Result Cones: ")
     for cone in ListOfSymbolicCones
         enumerateFundamentalParallelePiped(cone)
         computeRationalFunction(cone)
-        ratfun += cone.ratfun
-        PrintSymbolicCone(cone)
+        ratfun += cone.sign*cone.ratfun
+        println(cone)
+        println("fp: ", cone.fp)
+        println("ratfun: ", cone.ratfun)
+        println()
     end
-
-    #for cone in ListOfSymbolicCones
-    #    enumerateFundamentalParallelePiped(cone)
-    #end
-    #println("FP computed! ")
-    #for cone in ListOfSymbolicCones
-    #    println("FP of cone:", cone.fp)
-    #end
-
-
-    #for cone in ListOfSymbolicCones
-    #    computeRationalFunction(cone)
-    #end
-    #println("RationalFunctions computed! ")
-    #for cone in ListOfSymbolicCones
-    #    println("Ratfun of cone:", cone.ratfun)
-    #end
-    #
-    #for cone in ListOfSymbolicCones
-    #    ratfun+= cone.ratfun
-    #end
     return ratfun
 
 end
 
 
-#C = macmahon([1 -1; -2 1], [0, 0])
-
-
-#PrintSymbolicCone(C)
-
-#println("C: ", C)
-#println("Flip res: ", flip(C))
-#res = elimLastCoordinate(C)
-#println("res: ", res)
-#PrintCone(res[1])
-
-# println("eliminate cordinates result:\n", eliminateCoordinates(C, size(C.V, 1) - size(C.V, 2)))
-# println("EFP: ", enumerateFundamentalParallelePiped(C))
-#println("solve: ", solve([1 -1], [0]))
+println("solve: ", solve([1 -1], [0]))
 #println("solve: ", solve([1 -1; -2 1], [0, 0]))
-#V = [1 1; 0 3]
-#q = [0.0, 0.0]
-#o = [false, false]
-#s = SymbolicCone(V, q, o, 1)
-#PrintSymbolicCone(s)
-#res = enumerateFundamentalParallelePiped(s)
-#println("resfpp: ", res)
-#println("prim_v: ", prim_v([-2, 2, 4]))
-#println("prim: ", prim([-2 2 4; 0 3 6]))
+#println("solve: ", solve([-1 -1; 1 -1], [-4, 0]))
 end
