@@ -43,7 +43,8 @@ function elimLastCoordinate(C::SymbolicCone)
     o = C.o
     res = []
     II = []
-    # println("V: ", V)
+    println("ELC: ")
+    println("V: ", V)
     # println("q: ", q)
      #println("o: ", o)
      #println("k: ", k)
