@@ -43,25 +43,22 @@ function elimLastCoordinate(C::SymbolicCone)
     o = C.o
     res = []
     II = []
-    println("ELC: ")
-    println("V: ", V)
-    # println("q: ", q)
-     #println("o: ", o)
-     #println("k: ", k)
-    # println("vector: ", Vector(1:k))
-    # println("filter1: ", filter(x -> V[n, x] > 0, Vector(1:k)))
-    # println("filter2: ", filter(x -> V[n, x] <= 0, Vector(1:k)))
-    println("qn: ", q[n])
+
     Iplus = filter(x -> V[n, x] > 0, Vector(1:k)) #one of them should have zero eq or not?
     Iminus = filter(x -> V[n, x] < 0, Vector(1:k))
-    if (q[n] < 0 || (q[n] == 0 && size(Iplus, 1) <= size(Iminus, 1) && size(Iplus, 1) >= 1) )
-        println("Iminus")
-        II = Iminus
-        res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:n-1])]
-    else
-        #res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:n-1])]
+    #if (q[n] > 0 || (q[n] == 0 && size(Iplus, 1) <= size(Iminus, 1) && size(Iplus, 1) >= 1) )
+    #if (q[n] == 0)
+    #    println("Iequal")
+    #    return [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:k])]
+    #end
+    if (q[n] < 0)
+        #res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:k])]
         println("Iplus")
         II = Iplus
+    else
+        println("Iminus")
+        II = Iminus
+        res = [SymbolicCone(prim(V[1:n-1, :]), q[1:n-1], o[1:k])]
     end
     #Cprime if q[n] is zero
     println("II: ", II)
@@ -95,7 +92,6 @@ function elimLastCoordinate(C::SymbolicCone)
         print("\nflip:")
         println(flip_res)
     end
-    #######
     return res
 end
 
@@ -114,20 +110,19 @@ end
 
 function eliminateCoordinates(C::SymbolicCone, k::Int)
     res = elimLastCoordinate(C)
-    #println("elc res 1: ", res)
-    res2 = []
-    #println("K:", k)
+    innerres = []
+
+    println("first elc: ", res)
     for i = 1:(k-1)#becuse we call eliminate last coordinate before
         for j = 1:length(res)
-            eres = elimLastCoordinate(res[j])
-            #println("eres: ", eres)
-            append!(res2, eres)
-            #println("res2: ", res2)
+            eres =  elimLastCoordinate(res[j])
+            append!(innerres, eres)
+            println("j: ", j, " eres: ", eres)
         end
-        res = res2
-        res2 = []
+        res = innerres
+        innerres = []
     end
-    #println("e res: ", res)
+
     return res
 end
 
@@ -197,8 +192,10 @@ function enumerateFundamentalParallelePiped(C::SymbolicCone)
     qsummand = [Int64(qi) for qi in (lastDiagonal*apex + C.V*qfrac) ]
     #println("qsummand", qsummand)
 
+    #println("dim: ", dimension, " adim: ", ambientDimension)
+    #println("o: ", C.o, " qfrac: ", qfrac)
     #openness
-    openness = [ (qfrac[j] == 0 ? C.o[j] : 0) for j in 1:dimension]
+    openness = [ (qfrac[j] == 0 ? C.o[j] : 0) for j in 1:ambientDimension]
     #println("openness: ", openness)
 
     #bigP
@@ -288,20 +285,16 @@ function solve(A::Matrix{Int64}, b::Vector{Int64})
     #println("eliminate coordinates: ", ListOfSymbolicCones)
     println("Result Cones: ")
     for cone in ListOfSymbolicCones
-        enumerateFundamentalParallelePiped(cone)
-        computeRationalFunction(cone)
-        ratfun += cone.sign*cone.ratfun
+        #enumerateFundamentalParallelePiped(cone)
+        #computeRationalFunction(cone)
+        #ratfun += cone.sign*cone.ratfun
         println(cone)
-        println("fp: ", cone.fp)
-        println("ratfun: ", cone.ratfun)
-        println()
+        #println("fp: ", cone.fp)
+        #println("ratfun: ", cone.ratfun)
+        #println()
     end
     return ratfun
 
 end
 
-
-println("solve: ", solve([1 -1], [0]))
-#println("solve: ", solve([1 -1; -2 1], [0, 0]))
-#println("solve: ", solve([-1 -1; 1 -1], [-4, 0]))
 end

@@ -11,26 +11,11 @@ mutable struct SymbolicCone
         new(V, q, o, sign)
 end
 
-function PrintSymbolicCone(C::SymbolicCone)
-    println("\nSymbolic Cone:")
-    println("V: \t", C.V)
-    #display(C.V)
-    println("q: \t", C.q)
-    println("o: \t", C.o)
-    println("sign:\t", C.sign)
-    #println("fp: \t", C.fp)
-    #println("Rational Function: ", C.ratfun, "\n\n")
-end
-
-function PrintSymbolicConeSimple(C::SymbolicCone)
-    println("\nSymbolic Cone:")
-    println("V: \t", C.V)
-    #display(C.V)
-    println("q: \t", C.q)
-    println("o: \t", C.o)
-    println("sign:\t", C.sign, "\n\n")
-end
 
 function Base.println(C::SymbolicCone)
     println("Symbolic Cone: \t", C.V, "\t", C.q, "\t", C.o, "\t", C.sign, "\n")
+end
+
+function Base.isequal()
+    return true;
 end
